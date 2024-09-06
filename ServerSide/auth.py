@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session
+from flask import Blueprint, request, session, current_app
 from flask_mail import Message
 from werkzeug.security import generate_password_hash
 from . import db, mail
@@ -46,7 +46,9 @@ def register():
         session['password'] = generate_password_hash(password, method='pbkdf2:sha256')
 
         # Prepare and send an OTP email to the user
-        msg = Message('Brain-Battles password assistance', sender='Brain-Battles', recipients=[email])
+        msg = Message('Brain-Battles password assistance',
+                      sender=current_app.config['MAIL_USERNAME'],
+                      recipients=[email])
         msg.body = (f'To authenticate, please use the following One Time Password (OTP):\n'
                     f'Your OTP code is: {otp}\n'
                     f'Don\'t share this OTP with anyone. Our customer service team will never ask you\n'
