@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -23,6 +24,14 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  # app password in gmail
     app.config['MAIL_USE_TLS'] = False
     app.config['MAIL_USE_SSL'] = True
+
+    # Configuration for session security
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
+        PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
+    )
 
     db.init_app(app)
     mail.init_app(app)
