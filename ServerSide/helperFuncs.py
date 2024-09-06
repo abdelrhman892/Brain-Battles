@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime
 from flask import jsonify
 
@@ -10,3 +12,10 @@ def message_response(message, status_code, **kwargs):
         'status_code': status_code,
         **kwargs  # Unpack additional key-value pairs directly here
     }), status_code
+
+
+# Function to generate a random OTP (One-Time Password) using digits
+def generate_otp(length=6):
+    characters = string.digits
+    otp = ''.join(random.choice(characters) for _ in range(length))  # Generate OTP of specified length
+    return otp
