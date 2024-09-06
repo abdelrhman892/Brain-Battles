@@ -1,11 +1,15 @@
+import logging
+from types import NoneType
+
 from flask import Blueprint, request, session, current_app
 from flask_mail import Message
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
 from .models import User
-from .validtionModels import SignupSchema
+from .validtionModels import SignupSchema, LoginSchema
 from marshmallow.exceptions import ValidationError
-from .helperFuncs import message_response, generate_otp
+from .helperFuncs import message_response, generate_otp, generate_jwt_token, generate_long_token
+from .helperFuncs import token_required
 
 auth = Blueprint('auth', __name__)
 
@@ -108,11 +112,53 @@ def verify_otp():
         return message_response('Invalid OTP', 400)
 
 
-@auth.route('/log-in', methods=['GET', 'POST'])
+@auth.route('/log-in', methods=['POST'])
 def login():
-    return "login page"
+    try:
+        if not request.json:
+            return message_response('Missing JSON in request', 400)
+
+        schema = LoginSchema()
+        try:
+            date = schema.load(request.json)
+        except ValidationError as err:
+            return message_response(err.messages, 400)
+
+        email = date['email']
+        password = date['password']
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return message_response('Email not registered', 401)
+
+        if user and check_password_hash(user.password, password):
+            try:
+                # Generate JWT tokens (access and refresh)
+                token = generate_jwt_token(user=user)
+                refresh_token = generate_long_token(user=user)
+                return message_response(
+                    'Login successful!',
+                    200,
+                    token=token,
+                    refresh_token=refresh_token
+                )
+
+            except Exception as e:
+                # Log any exceptions that occur during the token generation process
+                logging.error(f"Error during login: {e}")
+                return message_response(str(e), 500)
+    except Exception as e:
+        logging.error(f"Error during login: {e}")
+        return message_response(str(e), 500)
 
 
-@auth.route('/log-out', methods=['GET', 'POST'])
-def logout():
-    return "logout page"
+@auth.route('/log-out', methods=['GET'])
+@token_required
+def logout(current_user):
+    try:
+        current_user.is_active = False
+        db.session.commit()
+        return message_response('Logged out successfully!', 200)
+    except NoneType as e:
+        logging.error(f"Error during logout: {e}")
+        return message_response(str(e), 500)
