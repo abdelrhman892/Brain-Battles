@@ -28,6 +28,10 @@ def create_app():
     mail.init_app(app)
     migrate.init_app(app, db)
 
+    from .auth import auth
+
+    app.register_blueprint(auth, url_prefix='/auth')
+
     with app.app_context():
         db.create_all()
 
