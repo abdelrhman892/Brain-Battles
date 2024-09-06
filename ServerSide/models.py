@@ -97,7 +97,7 @@ class Answer(db.Model):
     answer_text = db.Column(db.String, nullable=False)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
-    question_id = db.Column(db.String, db.ForeignKey('question.id'), nullable=False, index=True)
+    question_id = db.Column(db.String, db.ForeignKey('questions.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(),
                            onupdate=db.func.now(), nullable=False)
