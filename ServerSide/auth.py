@@ -8,8 +8,8 @@ from . import db, mail
 from .models import User
 from .validtionModels import SignupSchema, LoginSchema
 from marshmallow.exceptions import ValidationError
-from .helperFuncs import message_response, generate_otp, generate_jwt_token, generate_long_token
-from .helperFuncs import token_required
+from .helperFuncs import message_response, generate_otp, generate_jwt_token
+from .helperFuncs import token_required, generate_long_token
 
 auth = Blueprint('auth', __name__)
 
@@ -133,6 +133,9 @@ def login():
 
         if user and check_password_hash(user.password, password):
             try:
+                # Make user active
+                user.is_active = True
+                db.session.commit()
                 # Generate JWT tokens (access and refresh)
                 token = generate_jwt_token(user=user)
                 refresh_token = generate_long_token(user=user)
@@ -161,4 +164,69 @@ def logout(current_user):
         return message_response('Logged out successfully!', 200)
     except NoneType as e:
         logging.error(f"Error during logout: {e}")
+        return message_response(str(e), 500)
+
+
+@auth.route('/forgot-password', methods=['GET'])
+def forgot_password():
+    try:
+        data = request.args
+        email = data['email']
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return message_response('Email not registered', 401)
+        # Generate a One Time Password (OTP) and store it in the session
+        otp = generate_otp()
+        session['otp'] = otp
+        session['email'] = email
+        # Prepare and send an OTP email to the user
+        msg = Message('Brain-Battles password assistance',
+                      sender=current_app.config['MAIL_USERNAME'],
+                      recipients=[email])
+        msg.body = (f'To authenticate, please use the following One Time Password (OTP):\n'
+                    f'Your OTP code is: {otp}\n'
+                    f'Don\'t share this OTP with anyone. Our customer service team will never ask you\n'
+                    f'for your password, OTP, credit card, or banking info.\n\n'
+                    f'We hope to see you again soon.')
+
+        mail.send(msg)
+        return message_response('OTP sent to email! Check your inbox.', 200)
+    except Exception as e:
+        logging.error(str(e))
+
+
+@auth.route('/reset-password', methods=['PATCH'])
+def reset_password():
+    try:
+        # Retrieve the OTP from the request headers
+        otp = request.json.get('OTP')
+        password = request.json.get('password')
+
+        # Check if OTP was provided in the request
+        if not otp:
+            return message_response('Missing OTP', 400)
+
+        # Retrieve the OTP stored in the session for verification
+        session_otp = session.get('otp')
+        session_email = session.get('email')
+
+        if session_otp == otp:
+
+            user = User.query.filter_by(email=session_email).first()
+            if not password or len(password) < 7:
+                return message_response('Password must be at least 7 characters long', 400)
+
+            if check_password_hash(password, user.password):
+                return message_response('This password is same as your last password.', 400)
+
+            user.password = generate_password_hash(password, method='pbkdf2:sha256')
+            user.updated_at = db.func.now()
+            user.is_active = False
+
+            db.session.commit()
+            session.clear()
+
+            return message_response('Password reset successful!', 200)
+    except Exception as e:
+        logging.error(f"Error during reset: {e}")
         return message_response(str(e), 500)

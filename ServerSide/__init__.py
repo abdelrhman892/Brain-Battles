@@ -1,6 +1,7 @@
 import os
 from datetime import timedelta
 
+from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
@@ -9,6 +10,7 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 mail = Mail()
 migrate = Migrate()
+load_dotenv()
 
 
 def create_app():
@@ -36,7 +38,6 @@ def create_app():
     db.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
-
     from .auth import auth
 
     app.register_blueprint(auth, url_prefix='/auth')
