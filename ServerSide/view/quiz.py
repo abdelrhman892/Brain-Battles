@@ -14,8 +14,11 @@ from ..validtionModels import QuizSchema
 @token_required  # Ensure the user is authenticated with a valid token before accessing this route
 def add_quiz(current_user):
     try:
+        data = request.get_json()
+        if not data:
+            return message_response('Missing data', 404)
         # Attempt to validate and deserialize the incoming JSON request using QuizSchema
-        data = QuizSchema().load(request.json)
+        quizSchema = QuizSchema().load(data)
     except ValidationError as err:
         # Log validation errors and return an appropriate error response with the error messages
         logging.error(err.messages)
@@ -23,8 +26,8 @@ def add_quiz(current_user):
 
     # Create a new Quiz object using the validated data and associate it with the current user
     new_quiz = Quiz(
-        title=data['title'],
-        description=data['description'],
+        title=quizSchema['title'],
+        description=quizSchema['description'],
         user_id=current_user.id,
     )
     try:
@@ -108,7 +111,7 @@ def get_quiz_by_id(current_user):
 
 @view.route('/quizzes', methods=['GET'])
 @token_required  # Ensures the user is authenticated using a token before accessing the route
-def get_all_quiz(current_user):
+def get_all_quizzes(current_user):
     # Check if the current user has a role of 'user' or 'moderator', and deny access if they do
     if current_user.role in ['user', 'moderator']:
         return message_response('Access denied', 403)
