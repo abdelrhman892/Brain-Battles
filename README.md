@@ -19,10 +19,10 @@ The backend is built using Flask, a lightweight Python web framework, with SQLAl
 - **Flask**: A micro web framework used for building the RESTful API.
 - **SQLAlchemy**: ORM library for database interactions and management.
 - **Flask-Mail**: Extension for handling email functionality.
-- **marshmallow**: For form validation and handling.
+- **marshmallow**: For validation and handling.
 - **Flask-Migrate**: For database migrations and version control.
 - **JWT**: JSON Web Token for secure user authentication and authorization.
-- **Redis** (Optional): Used for caching tokens and managing session data.
+- **Redis**: Used for caching tokens and managing session data.
 
 ## Installation and Setup
 
