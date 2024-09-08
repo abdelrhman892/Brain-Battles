@@ -37,5 +37,5 @@ The backend is built using Flask, a lightweight Python web framework, with SQLAl
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/brain-battles-backend.git
-   cd brain-battles-backend
+   https://github.com/abdelrhman892/Brain-Battles.git
+   cd Brain-Battless
