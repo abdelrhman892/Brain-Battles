@@ -1,6 +1,7 @@
 import os
+import logging
 from datetime import timedelta
-
+from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,7 @@ load_dotenv()
 def create_app():
     app = Flask(__name__)
 
+    # App Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -35,13 +37,26 @@ def create_app():
         PERMANENT_SESSION_LIFETIME=timedelta(minutes=30)
     )
 
+    # Logging Configuration
+    if not app.debug:
+        handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
+        handler.setLevel(logging.ERROR)
+        formatter = logging.Formatter('%(asctime)s -  %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        app.logger.addHandler(handler)
+
+    # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
-    from .auth import auth
 
+    # Register Blueprints
+    from .user.auth import auth
+    from .user.userMange import user
     app.register_blueprint(auth, url_prefix='/auth')
+    app.register_blueprint(user, url_prefix='/profile')
 
+    # Create database tables
     with app.app_context():
         db.create_all()
 

@@ -4,12 +4,12 @@ from types import NoneType
 from flask import Blueprint, request, session, current_app
 from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db, mail
-from .models import User
-from .validtionModels import SignupSchema, LoginSchema
+from ServerSide import db, mail
+from ServerSide.models import User
+from ServerSide.validtionModels import SignupSchema, LoginSchema
 from marshmallow.exceptions import ValidationError
-from .helperFuncs import message_response, generate_otp, generate_jwt_token
-from .helperFuncs import token_required, generate_long_token
+from ServerSide.helperFuncs import message_response, generate_otp, generate_jwt_token, refresh_token_required
+from ServerSide.helperFuncs import token_required, generate_long_token
 
 auth = Blueprint('auth', __name__)
 
@@ -229,4 +229,20 @@ def reset_password():
             return message_response('Password reset successful!', 200)
     except Exception as e:
         logging.error(f"Error during reset: {e}")
+        return message_response(str(e), 500)
+
+
+@auth.route('/refresh_token')
+@refresh_token_required
+def refresh_token(current_user):
+    try:
+        # Generate a new JWT token
+        token = generate_jwt_token(current_user)
+        return message_response(
+            'Token refreshed successfully.',
+            200,
+            token=token
+        )
+    except Exception as e:
+        logging.error(f"Error while refreshing token: {e}")
         return message_response(str(e), 500)

@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 import string
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -114,7 +115,7 @@ def refresh_token_required(f):
                 return message_response('Token is invalid', 401)  # Invalid token
 
             # Additional checks on role, email and active
-            if current_user.role != data['role'] or current_user.email != data['email']\
+            if current_user.role != data['role'] or current_user.email != data['email'] \
                     or current_user.is_active != data['is_active']:
                 return message_response('Invalid token', 401)
 
@@ -128,3 +129,12 @@ def refresh_token_required(f):
         return f(current_user, *args, **kwargs)  # Pass the current user to the wrapped function
 
     return decorated
+
+
+email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+
+def invalidate_email_format(email):
+    if not re.match(email_regex, email):
+        return True
+    return False
