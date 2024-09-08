@@ -53,8 +53,10 @@ def create_app():
     # Register Blueprints
     from .user.auth import auth
     from .user.userMange import user
+    from .view import view
     app.register_blueprint(auth, url_prefix='/auth')
     app.register_blueprint(user, url_prefix='/profile')
+    app.register_blueprint(view, url_prefix='/')
 
     # Create database tables
     with app.app_context():
