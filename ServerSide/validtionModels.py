@@ -54,3 +54,13 @@ class QuestionSchema(Schema):
             validate.Length(min=5, error='question text is too short'),
         ]
     )
+
+
+class AnswerSchema(Schema):
+    answer_text = fields.Str(
+        required=True,
+        validate=[
+            validate.Length(min=3, error='Answer text is too short'),
+        ]
+    )
+    is_correct = fields.Bool(required=True)
