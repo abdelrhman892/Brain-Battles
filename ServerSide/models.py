@@ -95,13 +95,13 @@ class Answer(db.Model):
     __tablename__ = 'answers'
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     answer_text = db.Column(db.String, nullable=False)
+    is_correct = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
     question_id = db.Column(db.String, db.ForeignKey('questions.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(),
                            onupdate=db.func.now(), nullable=False)
-    is_correct = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
