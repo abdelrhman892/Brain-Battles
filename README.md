@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Brain Battles** is an interactive quiz application that allows users to engage in various quizzes, track their progress, and challenge themselves. This repository contains the backend implementation of the Brain Battles platform, designed to handle user management, quiz creation, and scoring functionalities.
+**Brain Battles** is an interactive platform where users can create, participate in, and track quizzes on various topics. It allows users to sign up, login, logout and access a range of quizzes, each containing multiple-choice questions. Users can answer questions, receive immediate feedback on their responses, and see their scores and performance analytics. The platform also supports updating user profiles and managing quizzes through a simple interface, ensuring a seamless experience from quiz creation to taking and reviewing quizzes..
 
 The backend is built using Flask, a lightweight Python web framework, with SQLAlchemy for ORM-based database interactions. It features robust authentication using JWT (JSON Web Tokens) and offers email notifications for user activities.
 
