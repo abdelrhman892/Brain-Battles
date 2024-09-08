@@ -134,7 +134,7 @@ def refresh_token_required(f):
 email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 
-def invalidate_email_format(email):
+def invalid_email_format(email):
     if not re.match(email_regex, email):
         return True
     return False

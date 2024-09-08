@@ -6,9 +6,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .. import db
-from ..helperFuncs import token_required, message_response, invalidate_email_format
+from ..helperFuncs import token_required, message_response, invalid_email_format
 from ..models import User
-from ..validtionModels import SignupSchema
+from ..validtionModels import SignupSchema, UpdateUserSchema
 
 user = Blueprint('user', __name__)
 
@@ -67,7 +67,7 @@ def get_users(current_user):
 def get_user_by_email(current_user):
     email = request.headers.get('Email') if current_user.role == 'admin' else current_user.email
 
-    if not email or invalidate_email_format(email):
+    if not email or invalid_email_format(email):
         return message_response('Invalid email format', 401)
 
     try:
@@ -89,25 +89,29 @@ def update_user(current_user):
     email = request.headers.get('Email') if (
                 current_user.role == 'admin' and request.headers.get('Email')) else current_user.email
 
-    if not email or invalidate_email_format(email):
+    if not email or invalid_email_format(email):
         return message_response('Invalid email format', 401)
 
     is_user = User.query.filter_by(email=email).first()
     if not is_user:
         return message_response('User not found.', 404)
 
-    value = request.get_json()  # Get the updated data from the request
+    value = request.get_json()
     if not value:
         return message_response('No data provided for update.', 400)
+
+    schema = UpdateUserSchema()
+    try:
+        # Validate and deserialize input data
+        validated_data = schema.load(value, partial=True)
+    except ValidationError as err:
+        return message_response(err.messages, 400)
 
     updated_fields = {}
 
     # Update password if provided and valid
-    if 'password' in value:
-        new_password = value['password']
-        if len(new_password) < 7:
-            return message_response('Password must be at least 7 characters.', 400)
-
+    if 'password' in validated_data:
+        new_password = validated_data['password']
         if not check_password_hash(is_user.password, new_password):
             return message_response('This password is the same as your old password.', 400)
 
@@ -116,36 +120,28 @@ def update_user(current_user):
         updated_fields['password'] = 'Updated'
 
     # Update username if provided and valid
-    if 'username' in value:
-        new_username = value['username']
-        if len(new_username) < 3:
-            return message_response('Username must be at least 3 characters.', 400)
-
-        # Ensure the new username isn't already in use by another user
+    if 'username' in validated_data:
+        new_username = validated_data['username']
         if User.query.filter_by(username=new_username).first() and new_username != is_user.username:
             return message_response('Username already in use.', 400)
 
-        if is_user.username == value['username']:
-            return message_response('This username is same as your last username.', 400)
+        if is_user.username == new_username:
+            return message_response('This username is the same as your last username.', 400)
 
         is_user.username = new_username
         updated_fields['username'] = new_username
 
-    if 'role' in value:
-        if value['role'] in ['admin', 'moderator', 'user']:
-            is_user.role = value['role']
-            updated_fields['role'] = value['role']
-        else:
-            return message_response('Invalid role provided.', 400)
+    # Update role if provided and valid
+    if 'role' in validated_data:
+        is_user.role = validated_data['role']
+        updated_fields['role'] = validated_data['role']
 
     if not updated_fields:
         return message_response('No valid fields were provided for update.', 400)
 
     try:
-        # Commit the updated data to the database
         is_user.updated_at = db.func.now()
         db.session.commit()
-
         return message_response(
             'User updated successfully.',
             200,
@@ -153,6 +149,7 @@ def update_user(current_user):
         )
     except SQLAlchemyError as e:
         logging.error(f"Database error: {str(e)}")
+        db.session.rollback()
         return message_response(str(e), 500)
 
 
@@ -163,7 +160,7 @@ def delete_user(current_user):
         return message_response('Access denied', 401)
 
     email = request.headers.get('email')
-    if not email or invalidate_email_format(email):
+    if not email or invalid_email_format(email):
         return message_response('Invalid email format', 401)
     try:
         is_user = User.query.filter_by(email=email).first()
