@@ -64,3 +64,7 @@ class AnswerSchema(Schema):
         ]
     )
     is_correct = fields.Bool(required=True)
+
+
+class ScoreSchema(Schema):
+    score = fields.Float(required=True)

@@ -120,7 +120,7 @@ class Score(db.Model):
     id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
-    score = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(),
                            onupdate=db.func.now(), nullable=False)
