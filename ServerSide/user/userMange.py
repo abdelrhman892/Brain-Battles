@@ -131,10 +131,12 @@ def update_user(current_user):
         is_user.username = new_username
         updated_fields['username'] = new_username
 
-    # Update role if provided and valid
-    if 'role' in validated_data:
+    # Update role if provided, valid and role is admin
+    if 'role' in validated_data and current_user.role == 'admin':
         is_user.role = validated_data['role']
         updated_fields['role'] = validated_data['role']
+    else:
+        return message_response('Access denied', 401)
 
     if not updated_fields:
         return message_response('No valid fields were provided for update.', 400)
