@@ -8,6 +8,7 @@ from functools import wraps
 
 import jwt
 from flask import jsonify, request, current_app
+from marshmallow import ValidationError
 
 from ServerSide.models import User
 
@@ -138,3 +139,51 @@ def invalid_email_format(email):
     if not re.match(email_regex, email):
         return True
     return False
+
+
+def parse_duration(duration_str):
+    """Parse a human-readable duration string into a timedelta object."""
+    # Patterns to match duration formats
+    patterns = {
+        'days': re.compile(r'(\d+)\s*day', re.IGNORECASE),
+        'hours': re.compile(r'(\d+)\s*hour', re.IGNORECASE),
+        'minutes': re.compile(r'(\d+)\s*minute', re.IGNORECASE),
+    }
+
+    duration = timedelta()
+    for unit, pattern in patterns.items():
+        match = pattern.search(duration_str)
+        if match:
+            value = int(match.group(1))
+            if unit == 'days':
+                duration += timedelta(days=value)
+            elif unit == 'hours':
+                duration += timedelta(hours=value)
+            elif unit == 'minutes':
+                duration += timedelta(minutes=value)
+
+    return duration
+
+
+# Custom validator function to handle singular/plural time units
+def validate_time_duration(value):
+    # Regular expression for matching patterns like "1 day", "2 days", "1 hour", "30 minutes"
+    pattern = re.compile(r"^(\d+)\s*(day|days|hour|hours|minute|minutes)$")
+    match = pattern.match(value)
+
+    if not match:
+        raise ValidationError("Invalid time format. Valid formats: e.g.,"
+                              " '1 day', '2 days', '12 hours', '30 minutes'.")
+
+    # Extract the number and time unit from the match
+    number = int(match.group(1))
+    unit = match.group(2)
+
+    # Validate that the singular/plural form is correct based on the number
+    if number == 1 and unit not in ["day", "hour", "minute"]:
+        raise ValidationError(f"For '1', the correct form is singular"
+                              f" (e.g., '1 day', '1 hour', '1 minute').")
+    if number > 1 and unit not in ["days", "hours", "minutes"]:
+        raise ValidationError(
+            f"For numbers greater than '1', the correct form is plural "
+            f"(e.g., '2 days', '3 hours', '10 minutes').")

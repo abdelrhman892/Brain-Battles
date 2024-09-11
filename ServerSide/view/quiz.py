@@ -1,11 +1,12 @@
 import logging
+from datetime import datetime, timezone
 
 from flask import request
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from . import view
 from .. import db
-from ..helperFuncs import token_required, message_response, invalid_email_format
+from ..helperFuncs import token_required, message_response, invalid_email_format, parse_duration
 from ..models import Quiz, User
 from ..validtionModels import QuizSchema
 
@@ -25,10 +26,13 @@ def add_quiz(current_user):
         return message_response(err.messages, 401)
 
     # Create a new Quiz object using the validated data and associate it with the current user
+    now = datetime.now(timezone.utc)
     new_quiz = Quiz(
         title=quizSchema['title'],
         description=quizSchema['description'],
-        user_id=current_user.id,
+        expiration=now + parse_duration(quizSchema['expiration']),
+        timer=parse_duration(quizSchema['timer']).total_seconds() / 60,
+        user_id=current_user.id
     )
     try:
         # Add the new quiz to the database session and attempt to commit the changes

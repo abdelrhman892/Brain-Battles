@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime, timezone, timedelta
+
 from . import db
 
 role = {
@@ -43,9 +45,12 @@ class User(db.Model):
 
 class Quiz(db.Model):
     __tablename__ = 'quizzes'
-    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String, nullable=False)
+    visibility = db.Column(db.String, nullable=False, default='public')
+    expiration = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+    timer = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(),
@@ -59,6 +64,8 @@ class Quiz(db.Model):
             'id': self.id,
             'title': self.title,
             'description': self.description,
+            'expiration': self.expiration,
+            'timer': self.timer,
             'user_id': self.user_id,
             'created_at': self.created_at,
             'updated_at': self.updated_at,

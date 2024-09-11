@@ -7,10 +7,13 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from flask_migrate import Migrate
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 db = SQLAlchemy()
 mail = Mail()
 migrate = Migrate()
+scheduler = BackgroundScheduler()
 load_dotenv()
 
 
@@ -61,5 +64,30 @@ def create_app():
     # Create database tables
     with app.app_context():
         db.create_all()
+
+    # Setup APScheduler
+    def delete_expired_quizzes():
+        with app.app_context():  # Push application context
+            from .models import Quiz  # Import within function to avoid circular import
+            from datetime import datetime, timedelta
+            now = datetime.now()
+            expiration_threshold = now - timedelta(days=2)
+            expired_quizzes = db.session.query(Quiz).filter(Quiz.expiration < expiration_threshold).all()
+            for quiz in expired_quizzes:
+                db.session.delete(quiz)
+            db.session.commit()
+
+    scheduler.add_job(
+        func=delete_expired_quizzes,
+        trigger=IntervalTrigger(days=1),
+        id='delete_expired_quizzes',
+        name='Delete expired quizzes every day',
+        replace_existing=True
+    )
+    scheduler.start()
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
 
     return app
