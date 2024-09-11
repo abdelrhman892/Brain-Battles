@@ -1,4 +1,5 @@
 from marshmallow import Schema, fields, validate
+from .helperFuncs import validate_time_duration
 
 
 class SignupSchema(Schema):
@@ -44,6 +45,16 @@ class QuizSchema(Schema):
             validate.Regexp(r'^[A-Za-z0-9 ,.!?]+$',
                             error='Description can only contain alphanumeric characters, spaces, and basic punctuation')
         ]
+    )
+
+    expiration = fields.Str(
+        required=True,
+        validate=validate_time_duration
+    )
+
+    timer = fields.Str(
+        required=True,
+        validate=validate_time_duration
     )
 
 
