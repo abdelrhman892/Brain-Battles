@@ -67,6 +67,7 @@ class Quiz(db.Model):
             'id': self.id,
             'title': self.title,
             'description': self.description,
+            'last_editable_at': self.last_editable_at,
             'expiration': self.expiration,
             'timer': self.timer,
             'user_id': self.user_id,
