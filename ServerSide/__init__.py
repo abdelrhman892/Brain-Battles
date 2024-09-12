@@ -67,6 +67,7 @@ def create_app():
 
     # Setup APScheduler
     def delete_expired_quizzes():
+        """ The quiz wil be deleted every after 2 days from expiration date """
         with app.app_context():  # Push application context
             from .models import Quiz  # Import within function to avoid circular import
             from datetime import datetime, timedelta

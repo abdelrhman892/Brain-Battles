@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime, timezone
 
-from flask import request
+import jwt
+from flask import request, current_app
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from . import view
@@ -30,7 +31,11 @@ def add_quiz(current_user):
     new_quiz = Quiz(
         title=quizSchema['title'],
         description=quizSchema['description'],
-        expiration=now + parse_duration(quizSchema['expiration']),
+        last_editable_at=now + parse_duration(quizSchema['last_editable_at']),
+        # Expiration will start after last_editable_at end cuz he
+        #       cannot edit the quiz after the quiz is taking
+        expiration=(parse_duration(quizSchema['last_editable_at'])
+                    + parse_duration(quizSchema['expiration'])),
         timer=parse_duration(quizSchema['timer']).total_seconds() / 60,
         user_id=current_user.id
     )
@@ -94,12 +99,37 @@ def get_quiz_by_id(current_user):
     else:
         user = current_user  # If not admin or no email header, use the current user's quizzes
 
-    quiz_id = request.headers.get('X-Quiz-ID')
-    if not quiz_id:
-        return message_response('Missing quiz id', 400)
+    # Check if 'X-Quiz-ID' is present in the request headers
+    if request.headers.get('X-Quiz-ID'):
+        quiz_id = request.headers.get('X-Quiz-ID')
+        # Validate that 'quiz_id' is present
+        if not quiz_id:
+            return message_response('Missing quiz id', 400)
+        # Retrieve the quiz for the current user using the 'quiz_id' from the header
+        quiz = Quiz.query.filter_by(user_id=user.id, id=quiz_id).first()
+    else:
+        try:
+            # Retrieve the 'token' from the query parameters
+            token = request.args.get('token')
+            # Validate that 'token' is present
+            if not token:
+                return message_response('Missing token', 400)
+            # Decode the token to get the payload data
+            data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            # Handle the case where the token has expired
+            return message_response('The quiz is no longer available because'
+                                    ' the time limit has passed.', 401)
+        except jwt.InvalidTokenError:
+            # Handle the case where the token is invalid
+            return message_response('The token is invalid', 401)
+        # Extract 'quiz_id' from the token payload
+        quiz_id = data.get('id')
 
-    # Retrieve the quiz for the current user and given user_id quiz_id from the header
-    quiz = Quiz.query.filter_by(user_id=user.id, id=quiz_id).first()
+        if not quiz_id:
+            return message_response('Missing quiz id', 400)
+        # Retrieve the quiz for the current user and given quiz_id from the header
+        quiz = Quiz.query.filter_by(id=quiz_id).first()
 
     # Check if the quiz exists
     if not quiz:
@@ -199,6 +229,10 @@ def update_quiz(current_user):
     quiz = Quiz.query.filter_by(user_id=user.id, id=quiz_id).first()
     if not quiz:  # If the quiz is not found
         return message_response('Quiz not found', 404)
+
+    if datetime.now() >= quiz.last_editable_at:  # check if the author can update more
+        return message_response('You can no longer edit this quiz,'
+                                ' the editing period has ended', 400)
 
     data = request.get_json()  # Get JSON data from the request body
     if not data:
