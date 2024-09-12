@@ -17,11 +17,11 @@ scheduler = BackgroundScheduler()
 load_dotenv()
 
 
-def create_app():
+def create_app(database_url='sqlite:///db.sqlite'):
     app = Flask(__name__)
 
     # App Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
@@ -67,7 +67,7 @@ def create_app():
 
     # Setup APScheduler
     def delete_expired_quizzes():
-        """ The quiz wil be deleted every after 2 days from expiration date """
+        """ The quiz will be deleted every after 2 days from expiration date """
         with app.app_context():  # Push application context
             from .models import Quiz  # Import within function to avoid circular import
             from datetime import datetime, timedelta
@@ -78,14 +78,15 @@ def create_app():
                 db.session.delete(quiz)
             db.session.commit()
 
-    scheduler.add_job(
-        func=delete_expired_quizzes,
-        trigger=IntervalTrigger(days=1),
-        id='delete_expired_quizzes',
-        name='Delete expired quizzes every day',
-        replace_existing=True
-    )
-    scheduler.start()
+    if not app.testing:
+        scheduler.add_job(
+            func=delete_expired_quizzes,
+            trigger=IntervalTrigger(days=1),
+            id='delete_expired_quizzes',
+            name='Delete expired quizzes every day',
+            replace_existing=True
+        )
+        scheduler.start()
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
