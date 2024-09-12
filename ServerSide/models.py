@@ -50,28 +50,32 @@ class Quiz(db.Model):
     description = db.Column(db.String, nullable=False)
     visibility = db.Column(db.String, nullable=False, default='public')
     last_editable_at = db.Column(db.DateTime, nullable=False,
-                                 default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+                                 default=lambda: datetime.now() + timedelta(days=2))
     expiration = db.Column(db.DateTime, nullable=False,
-                           default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+                           default=lambda: datetime.now() + timedelta(days=1))
     timer = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(),
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
 
     questions = db.relationship('Question', backref='quiz', lazy='joined', cascade="all, delete-orphan")
     scores = db.relationship('Score', backref='quiz', lazy='joined', cascade="all, delete-orphan")
 
     def to_dict(self):
+        def format_datetime(dt):
+            return dt.strftime('%Y-%m-%d %I:%M:%S %p') if dt else None
+
         return {
             'id': self.id,
             'title': self.title,
             'description': self.description,
-            'expiration': self.expiration,
+            'last_editable_at': format_datetime(self.last_editable_at),
+            'expiration': format_datetime(self.expiration),
             'timer': self.timer,
             'user_id': self.user_id,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
+            'created_at': format_datetime(self.created_at),
+            'updated_at': format_datetime(self.updated_at),
             'questions': [question.to_dict() for question in self.questions],
             'scores': [score.to_dict() for score in self.scores],
         }

@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, validates, ValidationError
 from .helperFuncs import validate_time_duration
 
 
@@ -46,6 +46,14 @@ class QuizSchema(Schema):
                             error='Description can only contain alphanumeric characters, spaces, and basic punctuation')
         ]
     )
+
+    visibility = fields.String(required=True)
+
+    @validates('visibility')
+    def validate_visibility(self, value):
+        allowed_values = ['public', 'private']
+        if value not in allowed_values:
+            raise ValidationError(f'Invalid value for visibility. Must be public or private')
 
     last_editable_at = fields.Str(
         required=True,

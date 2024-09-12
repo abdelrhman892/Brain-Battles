@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timedelta
 
 import jwt
 from flask import request, current_app, url_for
@@ -27,6 +26,9 @@ def send_quiz_link(current_user):
     quiz = Quiz.query.filter_by(id=schema.get('id')).first()
     if not quiz:
         return message_response('Quiz not found', 400)
+    if quiz.visibility == 'public':
+        return message_response('Quiz is public, this feature'
+                                ' just for private quizzes', 200)
 
     access_token = jwt.encode({
         'id': schema.get('id'),
