@@ -49,15 +49,18 @@ class Quiz(db.Model):
     title = db.Column(db.String, nullable=False)
     description = db.Column(db.String, nullable=False)
     visibility = db.Column(db.String, nullable=False, default='public')
-    expiration = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+    last_editable_at = db.Column(db.DateTime, nullable=False,
+                                 default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
+    expiration = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.now(timezone.utc) + timedelta(days=1))
     timer = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=db.func.now(),
                            onupdate=db.func.now(), nullable=False)
 
-    questions = db.relationship('Question', backref='quiz', lazy='joined')
-    scores = db.relationship('Score', backref='quiz', lazy='joined')
+    questions = db.relationship('Question', backref='quiz', lazy='joined', cascade="all, delete-orphan")
+    scores = db.relationship('Score', backref='quiz', lazy='joined', cascade="all, delete-orphan")
 
     def to_dict(self):
         return {

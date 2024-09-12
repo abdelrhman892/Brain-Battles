@@ -6,3 +6,4 @@ from . import quiz
 from . import question
 from . import answer
 from . import score
+from . import quizSubmition

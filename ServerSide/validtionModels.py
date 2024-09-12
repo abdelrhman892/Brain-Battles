@@ -47,6 +47,11 @@ class QuizSchema(Schema):
         ]
     )
 
+    last_editable_at = fields.Str(
+        required=True,
+        validate=validate_time_duration
+    )
+
     expiration = fields.Str(
         required=True,
         validate=validate_time_duration
@@ -79,3 +84,8 @@ class AnswerSchema(Schema):
 
 class ScoreSchema(Schema):
     score = fields.Float(required=True)
+
+
+class SendMailSchema(Schema):
+    email = fields.Email(required=True)
+    id = fields.UUID(required=True)
