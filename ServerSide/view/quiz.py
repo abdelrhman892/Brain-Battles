@@ -27,16 +27,17 @@ def add_quiz(current_user):
         return message_response(err.messages, 401)
 
     # Create a new Quiz object using the validated data and associate it with the current user
-    now = datetime.now(timezone.utc)
+    now = datetime.now()
     new_quiz = Quiz(
         title=quizSchema['title'],
         description=quizSchema['description'],
+        visibility=quizSchema['visibility'],
         last_editable_at=now + parse_duration(quizSchema['last_editable_at']),
         # Expiration will start after last_editable_at end cuz he
         #       cannot edit the quiz after the quiz is taking
-        expiration=(parse_duration(quizSchema['last_editable_at'])
-                    + parse_duration(quizSchema['expiration'])),
-        timer=parse_duration(quizSchema['timer']).total_seconds() / 60,
+        expiration=now + (parse_duration(quizSchema['last_editable_at'])
+                          + parse_duration(quizSchema['expiration'])),
+        timer=parse_duration(quizSchema['timer']).total_seconds(),
         user_id=current_user.id
     )
     try:
