@@ -38,7 +38,7 @@ def generate_jwt_token(user):
         'role': user.role,  # User role (e.g., admin, normal user)
         'is_active': user.is_active,  # user active
         'iat': datetime.now(timezone.utc),  # Issued at time
-        'exp': datetime.now(timezone.utc) + timedelta(minutes=30),  # Expiration time (7 minutes)
+        'exp': datetime.now(timezone.utc) + timedelta(minutes=30),  # Expiration time (30 minutes)
         'jti': str(uuid.uuid4())  # Unique token identifier (JWT ID)
     }
     token = jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
