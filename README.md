@@ -23,6 +23,7 @@ The backend is built using Flask, a lightweight Python web framework, with SQLAl
 - **Flask-Migrate**: For database migrations and version control.
 - **JWT**: JSON Web Token for secure user authentication and authorization.
 - **Redis**: Used for caching tokens and managing session data.
+- **Docker**: Containerization platform used for packaging the application and its dependencies into a container.
 
 ## Installation and Setup
 
