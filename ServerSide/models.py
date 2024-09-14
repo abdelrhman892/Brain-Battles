@@ -16,8 +16,8 @@ class User(db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False, index=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password = db.Column(db.String, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(),
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
     role = db.Column(db.String, default=role.get('USER'))
     is_active = db.Column(db.Boolean, default=True)
@@ -87,8 +87,8 @@ class Question(db.Model):
     question_text = db.Column(db.String, nullable=False)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(),
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
 
     answers = db.relationship('Answer', backref='question', lazy='joined')
@@ -113,8 +113,8 @@ class Answer(db.Model):
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
     question_id = db.Column(db.String, db.ForeignKey('questions.id'), nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(),
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
 
     def to_dict(self):
@@ -135,8 +135,8 @@ class Score(db.Model):
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     quiz_id = db.Column(db.String, db.ForeignKey('quizzes.id'), nullable=False, index=True)
     score = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=db.func.now(),
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
 
     def to_dict(self):

@@ -6,13 +6,11 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
-from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 db = SQLAlchemy()
 mail = Mail()
-migrate = Migrate()
 scheduler = BackgroundScheduler()
 load_dotenv()
 
@@ -51,7 +49,6 @@ def create_app(database_url='sqlite:///db.sqlite'):
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
-    migrate.init_app(app, db)
 
     # Register Blueprints
     from .user.auth import auth
