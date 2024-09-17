@@ -9,7 +9,7 @@ from ServerSide.models import User
 from ServerSide.validtionModels import SignupSchema, LoginSchema
 from marshmallow.exceptions import ValidationError
 from ServerSide.helperFuncs import message_response, generate_otp, generate_jwt_token, refresh_token_required
-from ServerSide.helperFuncs import token_required, generate_long_token
+from ServerSide.helperFuncs import token_required, generate_long_token, invalid_email_format
 
 auth = Blueprint('auth', __name__)
 
@@ -131,25 +131,29 @@ def login():
         if not user:
             return message_response('Email not registered', 401)
 
-        if user and check_password_hash(user.password, password):
-            try:
-                # Make user active
-                user.is_active = True
-                db.session.commit()
-                # Generate JWT tokens (access and refresh)
-                token = generate_jwt_token(user=user)
-                refresh_token = generate_long_token(user=user)
-                return message_response(
-                    'Login successful!',
-                    200,
-                    token=token,
-                    refresh_token=refresh_token
-                )
+        if user:
+            if check_password_hash(user.password, password):
+                try:
+                    # Make user active
+                    user.is_active = True
+                    db.session.commit()
+                    # Generate JWT tokens (access and refresh)
+                    token = generate_jwt_token(user=user)
+                    refresh_token = generate_long_token(user=user)
+                    return message_response(
+                        'Login successful!',
+                        200,
+                        Token=token,
+                        Refresh_token=refresh_token
+                    )
 
-            except Exception as e:
-                # Log any exceptions that occur during the token generation process
-                logging.error(f"Error during login: {e}")
-                return message_response(str(e), 500)
+                except Exception as e:
+                    # Log any exceptions that occur during the token generation process
+                    logging.error(f"Error during login: {e}")
+                    return message_response(str(e), 500)
+            else:
+                logging.error(f'incorrect email or password')
+                return message_response('Incorrect email or password', 401)
     except Exception as e:
         logging.error(f"Error during login: {e}")
         return message_response(str(e), 500)
@@ -171,7 +175,11 @@ def logout(current_user):
 def forgot_password():
     try:
         data = request.args
+        if not data:
+            return message_response('Missing argument in request', 404)
         email = data['email']
+        if invalid_email_format(email=email):
+            return message_response('Invalid email format', 400)
         user = User.query.filter_by(email=email).first()
         if not user:
             return message_response('Email not registered', 401)
@@ -241,7 +249,7 @@ def refresh_token(current_user):
         return message_response(
             'Token refreshed successfully.',
             200,
-            token=token
+            Token=token
         )
     except Exception as e:
         logging.error(f"Error while refreshing token: {e}")

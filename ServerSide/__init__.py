@@ -75,7 +75,8 @@ def create_app(database_url='sqlite:///db.sqlite'):
                 db.session.delete(quiz)
             db.session.commit()
 
-    if not app.testing:
+    # Check if the scheduler is already running before starting it
+    if not scheduler.running:
         scheduler.add_job(
             func=delete_expired_quizzes,
             trigger=IntervalTrigger(days=1),
