@@ -53,7 +53,7 @@ class Quiz(db.Model):
                                  default=lambda: datetime.now() + timedelta(days=2))
     expiration = db.Column(db.DateTime, nullable=False,
                            default=lambda: datetime.now() + timedelta(days=1))
-    timer = db.Column(db.Integer, nullable=False)
+    timer = db.Column(db.Integer, nullable=False)  # default=60
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),

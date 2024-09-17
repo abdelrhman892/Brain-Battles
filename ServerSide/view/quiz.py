@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 
 import jwt
 from flask import request, current_app
@@ -103,9 +103,6 @@ def get_quiz_by_id(current_user):
     # Check if 'X-Quiz-ID' is present in the request headers
     if request.headers.get('X-Quiz-ID'):
         quiz_id = request.headers.get('X-Quiz-ID')
-        # Validate that 'quiz_id' is present
-        if not quiz_id:
-            return message_response('Missing quiz id', 400)
         # Retrieve the quiz for the current user using the 'quiz_id' from the header
         quiz = Quiz.query.filter_by(user_id=user.id, id=quiz_id).first()
     else:
@@ -114,7 +111,7 @@ def get_quiz_by_id(current_user):
             token = request.args.get('token')
             # Validate that 'token' is present
             if not token:
-                return message_response('Missing token', 400)
+                return message_response('Missing token or quiz_id', 400)
             # Decode the token to get the payload data
             data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
