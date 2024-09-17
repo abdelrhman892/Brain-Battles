@@ -112,7 +112,7 @@ def update_user(current_user):
     # Update password if provided and valid
     if 'password' in validated_data:
         new_password = validated_data['password']
-        if not check_password_hash(is_user.password, new_password):
+        if check_password_hash(is_user.password, new_password):
             return message_response('This password is the same as your old password.', 400)
 
         is_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
@@ -135,7 +135,7 @@ def update_user(current_user):
     if 'role' in validated_data and current_user.role == 'admin':
         is_user.role = validated_data['role']
         updated_fields['role'] = validated_data['role']
-    else:
+    elif not current_user.role == 'admin' and 'role' in validated_data:
         return message_response('Access denied', 401)
 
     if not updated_fields:
