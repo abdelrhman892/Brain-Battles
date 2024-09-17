@@ -17,7 +17,7 @@ def add_question(current_user):
     try:
         data = request.get_json()  # Get JSON data from the request body
         if not data:
-            return message_response('Missing data', 400)
+            return message_response('Missing data', 404)
 
         # Validate and deserialize the input data using QuestionSchema
         question_schema = QuestionSchema().load(data)
@@ -29,7 +29,7 @@ def add_question(current_user):
     # Retrieve the quiz ID from the request headers
     quiz_id = request.headers.get('X-Quiz-ID')
     if not quiz_id:
-        return message_response('Missing quiz ID', 400)
+        return message_response('Missing quiz ID', 404)
 
     try:
         # Ensure the quiz exists
