@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from . import db
 
@@ -18,7 +18,7 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
-                           onupdate=db.func.now(), nullable=False)
+                           onupdate=lambda: datetime.now(), nullable=False)
     role = db.Column(db.String, default=role.get('USER'))
     is_active = db.Column(db.Boolean, default=True)
     email_verified = db.Column(db.Boolean, default=False)
@@ -38,8 +38,8 @@ class User(db.Model):
             'updated_at': self.updated_at,
             'email_verified': self.email_verified,
             'role': self.role,
-            'quizzes': [quiz.to_dict() for quiz in self.quizzes],
-            'scores': [score.to_dict() for score in self.scores]
+            'quizzes': [quiz.to_dict_for_user() for quiz in self.quizzes],
+            'scores': [score.to_dict_for_user() for score in self.scores]
         }
 
 
@@ -53,7 +53,7 @@ class Quiz(db.Model):
                                  default=lambda: datetime.now() + timedelta(days=2))
     expiration = db.Column(db.DateTime, nullable=False,
                            default=lambda: datetime.now() + timedelta(days=1))
-    timer = db.Column(db.Integer, nullable=False)  # default=60
+    timer = db.Column(db.Integer, nullable=False, default=60)
     user_id = db.Column(db.String, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(), nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
@@ -70,14 +70,32 @@ class Quiz(db.Model):
             'id': self.id,
             'title': self.title,
             'description': self.description,
+            'visibility': self.visibility,
             'last_editable_at': format_datetime(self.last_editable_at),
             'expiration': format_datetime(self.expiration),
             'timer': self.timer,
             'user_id': self.user_id,
             'created_at': format_datetime(self.created_at),
             'updated_at': format_datetime(self.updated_at),
-            'questions': [question.to_dict() for question in self.questions],
-            'scores': [score.to_dict() for score in self.scores],
+            'questions': [question.to_dict_for_quiz() for question in self.questions],
+            'scores': [score.to_dict() for score in self.scores]
+        }
+
+    def to_dict_for_user(self):  # Will delete user_id to don't show unnecessary info
+        def format_datetime(dt):
+            return dt.strftime('%Y-%m-%d %I:%M:%S %p') if dt else None
+
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'last_editable_at': format_datetime(self.last_editable_at),
+            'expiration': format_datetime(self.expiration),
+            'timer': self.timer,
+            'created_at': format_datetime(self.created_at),
+            'updated_at': format_datetime(self.updated_at),
+            'questions': [question.to_dict_for_quiz() for question in self.questions],
+            'scores': [score.to_dict() for score in self.scores]
         }
 
 
@@ -91,7 +109,7 @@ class Question(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(),
                            onupdate=db.func.now(), nullable=False)
 
-    answers = db.relationship('Answer', backref='question', lazy='joined')
+    answers = db.relationship('Answer', backref='question', lazy='joined', cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -101,7 +119,16 @@ class Question(db.Model):
             'user_id': self.user_id,
             'created_at': self.created_at,
             'updated_at': self.updated_at,
-            'answers': [answer.to_dict() for answer in self.answers],
+            'answers': [answer.to_dict_for_quiz() for answer in self.answers],
+        }
+
+    def to_dict_for_quiz(self):  # Will delete user_id and quiz_id to don't show unnecessary info
+        return {
+            'id': self.id,
+            'question_text': self.question_text,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'answers': [answer.to_dict_for_quiz() for answer in self.answers],
         }
 
 
@@ -128,6 +155,15 @@ class Answer(db.Model):
             'is_correct': self.is_correct,
         }
 
+    def to_dict_for_quiz(self):
+        return {
+            'id': self.id,
+            'answer_text': self.answer_text,
+            'question_id': self.question_id,
+            'created_at': self.created_at,
+            'is_correct': self.is_correct,
+        }
+
 
 class Score(db.Model):
     __tablename__ = 'scores'
@@ -144,5 +180,11 @@ class Score(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'quiz_id': self.quiz_id,
+            'score': self.score,
+        }
+
+    def to_dict_for_user(self):
+        return {
+            'id': self.id,
             'score': self.score,
         }

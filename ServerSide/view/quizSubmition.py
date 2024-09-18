@@ -17,6 +17,10 @@ from marshmallow import ValidationError
 @token_required
 def send_quiz_link(current_user):
     data = request.get_json()
+    quiz_id = request.headers.get('X-Quiz-ID')
+
+    if quiz_id is None:
+        return message_response('Missing Quiz id header', 404)
 
     try:
         schema = SendMailSchema().load(data)
@@ -24,15 +28,17 @@ def send_quiz_link(current_user):
         logging.error(err.messages)
         return message_response(err.messages, 400)
 
-    quiz = Quiz.query.filter_by(id=schema.get('id')).first()
+    quiz = Quiz.query.filter_by(id=quiz_id).first()
+
     if not quiz:
         return message_response('Quiz not found', 400)
+
     if quiz.visibility == 'public':
         return message_response('Quiz is public, this feature'
                                 ' just for private quizzes', 200)
 
     access_token = jwt.encode({
-        'id': schema.get('id'),
+        'id': quiz.id,
         'exp': quiz.expiration  # Token expires in 15 minutes
     }, current_app.config['SECRET_KEY'], algorithm='HS256')
 
@@ -80,6 +86,8 @@ def submit_quiz(current_user):
 
         # Fetch the correct answer for the question
         correct_answer = Answer.query.filter_by(question_id=question.id, is_correct=True).first()
+        if not correct_answer:
+            return message_response("True Answer is not found", 404)
 
         # Check if user's selected answer is correct
         if correct_answer and correct_answer.id == selected_answer_id:
@@ -104,7 +112,7 @@ def submit_quiz(current_user):
         200,
         quiz_id=quiz_id,
         user_id=user_id,
-        score=score_percentage,
+        score=f'{int(score_percentage)}%',
         correct_answers=correct_answers,
         total_questions=total_questions
     )

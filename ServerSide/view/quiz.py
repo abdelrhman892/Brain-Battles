@@ -113,7 +113,7 @@ def get_quiz_by_id(current_user):
             if not token:
                 return message_response('Missing token or quiz_id', 400)
             # Decode the token to get the payload data
-            data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
             # Handle the case where the token has expired
             return message_response('The quiz is no longer available because'
@@ -122,7 +122,7 @@ def get_quiz_by_id(current_user):
             # Handle the case where the token is invalid
             return message_response('The token is invalid', 401)
         # Extract 'quiz_id' from the token payload
-        quiz_id = data.get('id')
+        quiz_id = data['id']
 
         if not quiz_id:
             return message_response('Missing quiz id', 400)
