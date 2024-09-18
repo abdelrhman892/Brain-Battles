@@ -42,6 +42,9 @@ def register():
             # Return an error message if the email is already in use
             return message_response('Email already registered', 409)
 
+        if User.query.filter_by(username=username).first():
+            return message_response('Username already in use', 409)
+
         # Generate a One Time Password (OTP) and store it in the session
         otp = generate_otp()
         session['otp'] = otp

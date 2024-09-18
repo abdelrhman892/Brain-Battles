@@ -55,7 +55,7 @@ def add_score(current_user):
         db.session.commit()
 
         # Return a success message when the score is added successfully
-        return message_response('Score added successfully', 201)
+        return message_response('Score added successfully', 201, score=score.to_dict())
 
     except SQLAlchemyError as e:
         # Handle any database errors and rollback the transaction
