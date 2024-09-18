@@ -96,4 +96,3 @@ class ScoreSchema(Schema):
 
 class SendMailSchema(Schema):
     email = fields.Email(required=True)
-    id = fields.UUID(required=True)

@@ -65,7 +65,8 @@ def get_users(current_user):
 @user.route('/get_user', methods=['GET'])
 @token_required
 def get_user_by_email(current_user):
-    email = request.headers.get('Email') if current_user.role == 'admin' else current_user.email
+    email = request.headers.get('Email') if (current_user.role == 'admin' and
+                                             request.headers.get('Email')) else current_user.email
 
     if not email or invalid_email_format(email):
         return message_response('Invalid email format', 401)

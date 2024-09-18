@@ -204,7 +204,7 @@ def update_question(current_user):
     else:
         user = current_user  # If not admin or no email header, use the current user's context
 
-    question_id = request.headers.get('X-Quiz-ID')  # Retrieve the question ID from the request headers
+    question_id = request.headers.get('X-Questions-ID')  # Retrieve the question ID from the request headers
     if not question_id:
         return message_response('Missing question id', 400)
 
