@@ -29,6 +29,9 @@ def add_user(current_user):
     is_user = User.query.filter_by(email=data['email']).first()
     if is_user:
         return message_response('User already exists', 409)
+    is_user = User.query.filter_by(username=data['username']).first()
+    if is_user:
+        return message_response('username already in use', 409)
 
     try:
         new_user = User(
