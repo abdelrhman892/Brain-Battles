@@ -1,4 +1,4 @@
-# Brain Battles Backend
+# Brain Battles
 
 ## Overview
 
